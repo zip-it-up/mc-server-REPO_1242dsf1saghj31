@@ -1,4 +1,9 @@
-# Make a Minecraft Forge server
+# Requirements
+
+1. Minecraft Server Jar -> https://www.minecraft.net/en-us/article/minecraft--java-edition-1-20-1/
+2. Java -> https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
+
+## Make a Minecraft Forge server
 
 This folder creates a Minecraft Java **1.20.1 Forge** server.
 
