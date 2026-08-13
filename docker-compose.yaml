@@ -30,7 +30,7 @@ services:
       # Put local Forge mod .jar files in ./mods. They are copied into /data/mods
       # every time the server starts.
       - ./mods:/mods:ro
-      # Run .\export-server-files.ps1 once, then edit these local files.
+      # Edit these local files after the first startup.
       - ./server-files:/config:ro
     restart: unless-stopped
 
