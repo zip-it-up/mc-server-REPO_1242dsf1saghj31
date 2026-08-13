@@ -8,5 +8,13 @@
 /data/*
 !/data/.gitkeep
 
+# Local Forge mod files stay on the host and are copied into the server volume.
+/mods/*
+!/mods/.gitkeep
+
+# Local server settings exported from the Docker volume.
+/server-files/*
+!/server-files/.gitkeep
+
 # A local installer/server JAR is not needed by the Docker setup.
 /server.jar

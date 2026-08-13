@@ -11,15 +11,27 @@ services:
       EULA: "TRUE"
       TYPE: "FORGE"
       VERSION: "1.20.1"
-      FORGE_VERSION: "47.4.10"
+      FORGE_VERSION: "47.4.20"
       MEMORY: "${MEMORY:-4G}"
       TZ: "${TZ:-Europe/Bucharest}"
       MOTD: "${SERVER_MOTD:-A Minecraft Forge server}"
+      # Copy editable host files into the fast Docker volume before startup.
+      COPY_CONFIG_DEST: "/data"
+      SYNC_SKIP_NEWER_IN_DESTINATION: "false"
+      # Keep /data/mods aligned with the local ./mods folder on each restart.
+      REMOVE_OLD_MODS: "true"
       # Keep this enabled for every public server. Offline mode allows
       # username spoofing unless an authentication solution is also installed.
       ONLINE_MODE: "${ONLINE_MODE:-TRUE}"
     volumes:
-      - ./data:/data
+      # A Docker-managed Linux volume is far faster than a Windows bind mount
+      # for Forge's first install, which creates thousands of small files.
+      - minecraft-data:/data
+      # Put local Forge mod .jar files in ./mods. They are copied into /data/mods
+      # every time the server starts.
+      - ./mods:/mods:ro
+      # Run .\export-server-files.ps1 once, then edit these local files.
+      - ./server-files:/config:ro
     restart: unless-stopped
 
   # Public TCP tunnel for Minecraft Java. This service shares Minecraft's
@@ -32,5 +44,33 @@ services:
       minecraft:
         condition: service_healthy
     environment:
-      SECRET_KEY: "${PLAYIT_SECRET_KEY:?Set PLAYIT_SECRET_KEY in .env before starting the tunnel}"
+      # Empty is allowed for local-only startup. Add PLAYIT_SECRET_KEY to .env
+      # before starting this optional tunnel profile.
+      SECRET_KEY: "${PLAYIT_SECRET_KEY:-}"
     restart: unless-stopped
+
+  # On a new installation, export editable defaults to ./server-files once
+  # Minecraft has created them. Existing local edits are never overwritten.
+  settings-exporter:
+    image: alpine:3.21
+    depends_on:
+      minecraft:
+        condition: service_healthy
+    volumes:
+      - minecraft-data:/data:ro
+      - ./server-files:/server-files
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        mkdir -p /server-files/world
+        for file in server.properties whitelist.json ops.json banned-ips.json banned-players.json; do
+          if [ ! -e "/server-files/$$file" ]; then cp "/data/$$file" "/server-files/$$file"; fi
+        done
+        if [ ! -e /server-files/config ]; then cp -R /data/config /server-files/config; fi
+        if [ ! -e /server-files/defaultconfigs ]; then cp -R /data/defaultconfigs /server-files/defaultconfigs; fi
+        if [ ! -e /server-files/world/serverconfig ]; then cp -R /data/world/serverconfig /server-files/world/serverconfig; fi
+    restart: "no"
+
+volumes:
+  minecraft-data:
