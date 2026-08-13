@@ -15,6 +15,8 @@ This folder creates a Minecraft Java **1.20.1 Forge** server.
 
    Replace `path\to\mc-server-REPO_1242dsf1saghj31` with the real folder path.
 
+   You can change the name of the file, just keep the new file in mind, you can easily copy the path by right clicking the file and selecting 'Copy as Path'
+
 ## Start the server
 
 1. Run:
