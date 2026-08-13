@@ -1,70 +1,147 @@
-# Minecraft Forge server
+# Make a Minecraft Forge server
 
-Minecraft Java **1.20.1** with **Forge 47.4.10**, Docker, and an optional Playit public tunnel.
+This folder creates a Minecraft Java **1.20.1 Forge** server.
 
-## Start
+## Before you start
 
-Install and start [Docker Desktop](https://www.docker.com/products/docker-desktop/), then run:
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+2. Open Docker Desktop and wait until it says it is running.
+3. Download or clone this repository.
+4. Open the folder in PowerShell:
 
-```powershell
-docker compose up -d
-docker compose logs -f minecraft
-```
-
-The first Forge startup can take several minutes. Join with `localhost:25565` on the host PC, or use the host PC's LAN IP from the same network.
-
-## Let friends join
-
-Choose one option:
-
-### Public IP
-
-Forward **TCP port 25565** in your router to this PC's LAN IP on port `25565`, then share:
-
-```text
-YOUR-PUBLIC-IP:25565
-```
-
-Also allow TCP port `25565` through Windows Firewall. If port forwarding does not work because of CGNAT, use Playit instead.
-
-### Playit tunnel
-
-1. Create a Playit agent and Minecraft Java tunnel. Set the tunnel target to `127.0.0.1:25565`.
-2. Copy `.env.example` to `.env` and add the agent secret:
-
-   ```env
-   PLAYIT_SECRET_KEY=your-secret-key
+   ```powershell
+   cd path\to\mc-server-REPO_1242dsf1saghj31
    ```
 
-3. Start the tunnel:
+   Replace `path\to\mc-server-REPO_1242dsf1saghj31` with the real folder path.
+
+## Start the server
+
+1. Run:
+
+   ```powershell
+   docker compose up -d
+   ```
+
+2. Watch it start:
+
+   ```powershell
+   docker compose logs -f minecraft
+   ```
+
+3. Wait until you see `Done` in the logs. The first start can take several minutes.
+4. Close the log view with `Ctrl+C`.
+5. Open Minecraft Java Edition with **version 1.20.1** and the matching Forge version.
+6. Click **Multiplayer → Add Server**.
+7. Enter this server address if you are playing on the same PC:
+
+   ```text
+   localhost:25565
+   ```
+
+## Let friends join from anywhere
+
+Pick one method.
+
+### Easy method: Playit (no router setup)
+
+1. Make a free account at [playit.gg](https://playit.gg).
+2. Create a new **agent** and copy its secret key.
+3. In this folder, make a new file called `.env`.
+4. Put this in `.env`, replacing the text after `=` with your Playit secret key:
+
+   ```env
+   PLAYIT_SECRET_KEY=put-your-secret-key-here
+   ```
+
+5. In Playit, create a **Minecraft Java** tunnel for your agent.
+6. Set the tunnel's local address to `127.0.0.1` and its local port to `25565`.
+7. Start the server and tunnel:
 
    ```powershell
    docker compose --profile tunnel up -d
    ```
 
-Share the address shown in the Playit dashboard.
+8. Copy the public address shown by Playit and send it to your friends.
 
-## Customize
+### Router method: use your public IP
 
-- Add a 64×64 PNG named `server-icon.png` at `data/server-icon.png`, then restart the server.
-- Set the message shown in the Minecraft server list by adding this to `.env`:
+1. Open your router settings.
+2. Add a port-forwarding rule for **TCP port 25565** to this PC's local IP address, also on port `25565`.
+3. Allow TCP port `25565` through Windows Firewall.
+4. Find your public IP address and send friends:
 
-  ```env
-  SERVER_MOTD=My awesome Forge server
-  ```
+   ```text
+   YOUR-PUBLIC-IP:25565
+   ```
 
-- For a custom address like `play.example.com`, create a DNS `A` record pointing to your public IP. Keep Minecraft's `server-ip` setting empty.
-- Put compatible Forge mods in `data/mods/`. Players need the same required client mods.
+If this does not work, your internet provider may use CGNAT. Use the Playit method instead.
 
-## Commands
+## Add mods
+
+1. Stop the server:
+
+   ```powershell
+   docker compose down
+   ```
+
+2. Put server mods in this folder:
+
+   ```text
+   data\mods
+   ```
+
+   The folder appears after the server has started once. Create it yourself if it does not exist.
+
+3. Only use mods that say they work with **Minecraft 1.20.1** and **Forge 47.4.10**.
+4. Start the server again:
+
+   ```powershell
+   docker compose up -d
+   ```
+
+   If you use Playit, run `docker compose --profile tunnel up -d` instead.
+
+5. Your friends must install the same required mods in their own Minecraft Forge `mods` folder before joining.
+
+## Change the server picture and message
+
+1. Make a 64 × 64 pixel PNG image.
+2. Name it exactly `server-icon.png`.
+3. Put it here:
+
+   ```text
+   data\server-icon.png
+   ```
+
+4. To change the message below the server name, add this to `.env`:
+
+   ```env
+   SERVER_MOTD=My Minecraft server
+   ```
+
+5. Restart the server:
+
+   ```powershell
+   docker compose up -d
+   ```
+
+   If you use Playit, run `docker compose --profile tunnel up -d` instead.
+
+## Useful commands
 
 ```powershell
-# See status
+# See whether the server is running
 docker compose ps
 
-# Follow logs
-docker compose logs -f minecraft playit
+# See the server log
+docker compose logs -f minecraft
 
-# Stop safely
+# Stop the server safely
 docker compose down
 ```
+
+## Important
+
+- Never upload or share `.env` or `data/`. They can contain private server data and Playit secrets.
+- Back up the `data/` folder before adding or removing mods.
