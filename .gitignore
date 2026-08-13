@@ -1,0 +1,12 @@
+# Local secrets and configuration
+.env
+.env.*
+!.env.example
+
+# Minecraft runtime data: worlds, logs, generated Forge files, RCON credentials,
+# player data, and manually installed mods all stay local by default.
+/data/*
+!/data/.gitkeep
+
+# A local installer/server JAR is not needed by the Docker setup.
+/server.jar
