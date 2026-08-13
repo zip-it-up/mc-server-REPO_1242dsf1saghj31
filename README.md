@@ -1,88 +1,86 @@
-# Requirements
+# Minecraft Forge Server
 
-1. Minecraft Server Jar -> https://www.minecraft.net/en-us/article/minecraft--java-edition-1-20-1/
-2. Java -> https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html
-
-## Make a Minecraft Forge server
-
-This folder creates a Minecraft Java **1.20.1 Forge** server.
-
-## Before you start
-
-1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
-2. Open Docker Desktop and wait until it says it is running.
-3. Download or clone this repository.
-4. Open the folder in PowerShell:
-
-   ```powershell
-   cd path\to\mc-server-REPO_1242dsf1saghj31
-   ```
-
-   Replace `path\to\mc-server-REPO_1242dsf1saghj31` with the real folder path.
-
-   You can change the name of the file, just keep the new file in mind, you can easily copy the path by right clicking the file and selecting 'Copy as Path'
+A beginner-friendly Minecraft Java **1.20.1 Forge** server. Docker installs and runs everything; you do **not** need to download a server JAR or install Java.
 
 ## Start the server
 
-1. Run:
+1. Install and open [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+2. Open this folder in PowerShell.
+3. Start the server:
 
    ```powershell
    docker compose up -d
    ```
 
-2. Watch it start:
+4. Watch the startup log:
 
    ```powershell
    docker compose logs -f minecraft
    ```
 
-3. Wait until you see `Done` in the logs. The first start can take several minutes.
-4. Close the log view with `Ctrl+C`.
-5. Open Minecraft Java Edition with **version 1.20.1** and the matching Forge version.
-6. Click **Multiplayer → Add Server**.
-7. Enter this server address if you are playing on the same PC:
+5. Wait for `Done (...)!` before joining. Stop watching the log with `Ctrl+C`.
+6. In Minecraft, use **Minecraft 1.20.1** with **Forge 47.4.20** and join:
 
    ```text
    localhost:25565
    ```
 
-## Let friends join from anywhere
+## Let friends join with Playit.gg
 
-Pick one method.
+1. Make an account at [playit.gg](https://playit.gg).
+2. Create a Playit agent:
 
-### Easy method: Playit (no router setup)
+   1. Open the [Playit Docker setup wizard](https://playit.gg/account/setup/wizard/new-account/docker/docker-name) and sign in if asked.
+   2. Choose **Docker** as the agent type.
+   3. Give the agent a name, such as `Minecraft Server`, and create it.
+   4. Playit shows a Docker command containing `SECRET_KEY=...`. Copy only the value after `SECRET_KEY=`—not the quotes and not the rest of the command.
 
-1. Make a free account at [playit.gg](https://playit.gg).
-2. Create a new **agent** and copy its secret key.
-3. In this folder, make a new file called `.env`.
-4. Put this in `.env`, replacing the text after `=` with your Playit secret key:
+3. Create a file named `.env` next to `docker-compose.yaml`.
+4. Put your secret in it. Do not use quotes:
 
    ```env
-   PLAYIT_SECRET_KEY=put-your-secret-key-here
+   PLAYIT_SECRET_KEY=paste-your-secret-here
    ```
 
-5. In Playit, create a **Minecraft Java** tunnel for your agent.
-6. Set the tunnel's local address to `127.0.0.1` and its local port to `25565`.
-7. Start the server and tunnel:
+   The Playit secret is a private password that connects this computer's Playit agent to your Playit.gg account and tunnels. Docker passes it as `SECRET_KEY`; keep it only in `.env` and never share or upload it. Playit can also store it in its local `playit.toml` configuration file.
+
+5. Start Playit:
 
    ```powershell
-   docker compose --profile tunnel up -d
+   docker compose --profile tunnel up -d --force-recreate playit
    ```
 
-8. Copy the public address shown by Playit and send it to your friends.
+6. Check that it connected:
 
-### Router method: use your public IP
+   ```powershell
+   docker compose --profile tunnel logs -f playit
+   ```
 
-1. Open your router settings.
-2. Add a port-forwarding rule for **TCP port 25565** to this PC's local IP address, also on port `25565`.
-3. Allow TCP port `25565` through Windows Firewall.
-4. Find your public IP address and send friends:
+   Look for `playit connected; tunnels loaded`, then press `Ctrl+C`.
+
+7. On the Playit website, create a tunnel with these exact settings:
 
    ```text
-   YOUR-PUBLIC-IP:25565
+   Tunnel type: Minecraft Java
+   Local address: 127.0.0.1
+   Local port: 25565
+   Agent: your new Docker agent
    ```
 
-If this does not work, your internet provider may use CGNAT. Use the Playit method instead.
+8. Save it and make sure the tunnel says **Online**.
+9. Copy the public address shown by Playit and give that exact address to friends.
+
+### Playit timeout?
+
+- Join locally first with `localhost:25565`. If that works, Minecraft is fine.
+- In Playit, make sure the tunnel is **Online** and assigned to the same agent whose secret is in `.env`.
+- Confirm its local address is `127.0.0.1` and port is `25565`.
+- Use the newest public address displayed in Playit. Old Playit addresses stop working after a new tunnel is created.
+- Restart the Playit agent after changing the secret:
+
+  ```powershell
+  docker compose --profile tunnel up -d --force-recreate playit
+  ```
 
 ## Add mods
 
@@ -92,63 +90,90 @@ If this does not work, your internet provider may use CGNAT. Use the Playit meth
    docker compose down
    ```
 
-2. Put server mods in this folder:
-
-   ```text
-   data\mods
-   ```
-
-   The folder appears after the server has started once. Create it yourself if it does not exist.
-
-3. Only use mods that say they work with **Minecraft 1.20.1** and **Forge 47.4.10**.
-4. Start the server again:
+2. Put server mod `.jar` files in the `mods` folder next to `docker-compose.yaml`.
+3. Only use mods made for **Minecraft 1.20.1** and **Forge 47.4.20**.
+4. Do not put client-only mods on the server.
+5. Every player must install the same required mods in their own Minecraft `mods` folder.
+6. Start the server again:
 
    ```powershell
-   docker compose up -d
+   docker compose --profile tunnel up -d
    ```
 
-   If you use Playit, run `docker compose --profile tunnel up -d` instead.
+## Allow TLauncher / offline players
 
-5. Your friends must install the same required mods in their own Minecraft Forge `mods` folder before joining.
+By default, the server checks official Minecraft accounts. To allow TLauncher or other offline players, add this to `.env`:
 
-## Change the server picture and message
+```env
+ONLINE_MODE=FALSE
+```
 
-1. Make a 64 × 64 pixel PNG image.
+Then recreate the Minecraft container:
+
+```powershell
+docker compose up -d --force-recreate minecraft
+```
+
+If you use Playit, keep it running with:
+
+```powershell
+docker compose --profile tunnel up -d
+```
+
+Warning: offline mode lets anyone choose any username, including an operator's name. Only use it with people you trust.
+
+## Change server name, description, or picture
+
+To change the description shown below the server name in Minecraft, add this to `.env`:
+
+```env
+SERVER_MOTD=Welcome to my Minecraft server!
+```
+
+To add a server picture:
+
+1. Make a **64 x 64 pixel PNG** image.
 2. Name it exactly `server-icon.png`.
-3. Put it here:
-
-   ```text
-   data\server-icon.png
-   ```
-
-4. To change the message below the server name, add this to `.env`:
-
-   ```env
-   SERVER_MOTD=My Minecraft server
-   ```
-
-5. Restart the server:
+3. Put it in the `server-files` folder.
+4. Restart the server:
 
    ```powershell
-   docker compose up -d
+   docker compose restart minecraft
    ```
 
-   If you use Playit, run `docker compose --profile tunnel up -d` instead.
+## Change settings, whitelist, or bans
+
+Start the server once first. Then edit files in `server-files`:
+
+```text
+server.properties       Game mode, difficulty, PvP, max players, and more
+whitelist.json          Allowed players
+ops.json                Server operators
+banned-ips.json         Banned IP addresses
+banned-players.json     Banned players
+config                  Forge configuration
+world\serverconfig      Forge settings for this world
+```
+
+After any change, restart Minecraft:
+
+```powershell
+docker compose restart minecraft
+```
 
 ## Useful commands
 
 ```powershell
-# See whether the server is running
+# Check status
 docker compose ps
 
-# See the server log
+# Watch the Minecraft log
 docker compose logs -f minecraft
 
-# Stop the server safely
+# Stop safely
 docker compose down
 ```
 
-## Important
+## Keep private
 
-- Never upload or share `.env` or `data/`. They can contain private server data and Playit secrets.
-- Back up the `data/` folder before adding or removing mods.
+Never upload `.env`, `server-files`, or your world files to GitHub. They can contain your Playit secret and private server data.
