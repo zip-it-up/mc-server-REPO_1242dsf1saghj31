@@ -1,0 +1,36 @@
+services:
+  minecraft:
+    image: itzg/minecraft-server:java17
+    tty: true
+    stdin_open: true
+    ports:
+      # Listen on every host network interface. To accept Internet traffic,
+      # also forward TCP 25565 in the host router to this PC's LAN address.
+      - "0.0.0.0:25565:25565/tcp"
+    environment:
+      EULA: "TRUE"
+      TYPE: "FORGE"
+      VERSION: "1.20.1"
+      FORGE_VERSION: "47.4.10"
+      MEMORY: "${MEMORY:-4G}"
+      TZ: "${TZ:-Europe/Bucharest}"
+      MOTD: "${SERVER_MOTD:-A Minecraft Forge server}"
+      # Keep this enabled for every public server. Offline mode allows
+      # username spoofing unless an authentication solution is also installed.
+      ONLINE_MODE: "${ONLINE_MODE:-TRUE}"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+
+  # Public TCP tunnel for Minecraft Java. This service shares Minecraft's
+  # network namespace, so configure the Playit tunnel target as 127.0.0.1:25565.
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:latest
+    profiles: ["tunnel"]
+    network_mode: "service:minecraft"
+    depends_on:
+      minecraft:
+        condition: service_healthy
+    environment:
+      SECRET_KEY: "${PLAYIT_SECRET_KEY:?Set PLAYIT_SECRET_KEY in .env before starting the tunnel}"
+    restart: unless-stopped
